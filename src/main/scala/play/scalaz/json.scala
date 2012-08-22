@@ -25,7 +25,7 @@ object json {
   def field[A](key: String, validators: (A => Option[String])*)(implicit readz: Readz[A]): JsValue => VA[A] = js => {
     (js \ key) match {
       case JsUndefined(error) => "Field '%s' not found".format(key).failure.toValidationNEL
-      case value => readz.reads(js).fold(
+      case value => readz.reads(value).fold(
         e => e.map(("Field '%s': ".format(key))+).failure,
         s => validators.map(_(s)).flatten match {
           case Nil => s.success
