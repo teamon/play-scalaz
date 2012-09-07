@@ -7,8 +7,15 @@ import play.api.libs.json._
 object json {
   type VA[A] = ValidationNEL[String, A]
 
-  // type Writez[A] = Writes[A]
+  type Writez[A] = Writes[A]
   trait Readz[A] { def reads(js: JsValue): VA[A] }
+
+  trait Formatz[A] extends Readz[A] with Writez[A]
+
+  case class DerivedFormatz[A](readz: Readz[A], writez: Writez[A]) extends Formatz[A] {
+    def reads(js: JsValue) = readz.reads(js)
+    def writes(a: A) = writez.writes(a)
+  }
 
   def writez[A](f: A => List[(String, JsValue)]): Writes[A] = new Writes[A] {
     def writes(a: A) = toJson(f(a).toMap)
@@ -48,15 +55,36 @@ object json {
   def toJson[A](a: A)(implicit wz: Writes[A]) = wz.writes(a)
   def fromJson[A](js: JsValue)(implicit rz: Readz[A]) = rz.reads(js)
 
+  def formatz2[A, T1:Readz:Writez, T2:Readz:Writez](k1: String, k2: String)(apply: (T1, T2) => A)(unapply: A => (T1, T2)): Formatz[A] = DerivedFormatz(
+    readz2[A, T1, T2](k1, k2)(apply), writez2[A, T1, T2](k1, k2)(unapply)
+  )
+
+  def formatz3[A, T1:Readz:Writez, T2:Readz:Writez, T3:Readz:Writez](k1: String, k2: String, k3: String)(apply: (T1, T2, T3) => A)(unapply: A => (T1, T2, T3)): Formatz[A] = DerivedFormatz(
+    readz3[A, T1, T2, T3](k1, k2, k3)(apply), writez3[A, T1, T2, T3](k1, k2, k3)(unapply)
+  )
+
+
   def readz2[A, T1:Readz, T2:Readz](k1: String, k2: String)(f: (T1,T2) => A): Readz[A] = new Readz[A]{
     def reads(js: JsValue) = {
       val data = for {
         f1 <- field[T1](k1)
         f2 <- field[T2](k2)
-      } yield (f1 |@| f2)(f)
+      } yield Apply[VA].apply(f1, f2)(f)
       data(js)
     }
   }
+
+  def readz3[A, T1:Readz, T2:Readz, T3:Readz](k1: String, k2: String, k3: String)(f: (T1,T2,T3) => A): Readz[A] = new Readz[A]{
+    def reads(js: JsValue) = {
+      val data = for {
+        f1 <- field[T1](k1)
+        f2 <- field[T2](k2)
+        f3 <- field[T3](k3)
+      } yield Apply[VA].apply(f1, f2, f3)(f)
+      data(js)
+    }
+  }
+
 
   def writez1[A, T1:Writes](k1: String)(f: A => T1): Writes[A] = writez(a => {
     val r = f(a)
@@ -105,6 +133,7 @@ object json {
 
   object Writes extends DefaultWrites
   object Readz extends DefaultReadz
+  object Formatz extends DefaultReadz with DefaultWrites
 
   trait DefaultReadz {
     implicit val ShortReadz = SimpleReadz[Short]({
