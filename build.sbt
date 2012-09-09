@@ -20,3 +20,6 @@ libraryDependencies ++= Seq(
   "org.scalaz" % "scalaz-typelevel_2.9.2" % "7.0.0-M3"
 )
 
+seq(scalajarsSettings:_*)
+
+scalajarsProjectName := "play-scalaz"
