@@ -53,7 +53,14 @@ object json {
   }
 
   def toJson[A](a: A)(implicit wz: Writes[A]) = wz.writes(a)
+  def toJsonString[A:Writez](a: A) = Json.stringify(toJson(a))
   def fromJson[A](js: JsValue)(implicit rz: Readz[A]) = rz.reads(js)
+  def fromJsonString[A:Readz](data: String) = \/.fromTryCatch(Json.parse(data)).validation.flatMap(fromJson[A])
+
+
+  def formatz1[A, T1:Readz:Writez](k1: String)(apply: T1 => A)(unapply: A => T1): Formatz[A] = DerivedFormatz(
+    readz1[A, T1](k1)(apply), writez1[A, T1](k1)(unapply)
+  )
 
   def formatz2[A, T1:Readz:Writez, T2:Readz:Writez](k1: String, k2: String)(apply: (T1, T2) => A)(unapply: A => (T1, T2)): Formatz[A] = DerivedFormatz(
     readz2[A, T1, T2](k1, k2)(apply), writez2[A, T1, T2](k1, k2)(unapply)
@@ -63,6 +70,17 @@ object json {
     readz3[A, T1, T2, T3](k1, k2, k3)(apply), writez3[A, T1, T2, T3](k1, k2, k3)(unapply)
   )
 
+  def formatz4[A, T1:Readz:Writez, T2:Readz:Writez, T3:Readz:Writez, T4:Readz:Writez](k1: String, k2: String, k3: String, k4: String)(apply: (T1, T2, T3, T4) => A)(unapply: A => (T1, T2, T3, T4)): Formatz[A] = DerivedFormatz(
+    readz4[A, T1, T2, T3, T4](k1, k2, k3, k4)(apply), writez4[A, T1, T2, T3, T4](k1, k2, k3, k4)(unapply)
+  )
+
+  def formatz5[A, T1:Readz:Writez, T2:Readz:Writez, T3:Readz:Writez, T4:Readz:Writez, T5:Readz:Writez](k1: String, k2: String, k3: String, k4: String, k5: String)(apply: (T1, T2, T3, T4, T5) => A)(unapply: A => (T1, T2, T3, T4, T5)): Formatz[A] = DerivedFormatz(
+    readz4[A, T1, T2, T3, T4, T5](k1, k2, k3, k4, k5)(apply), writez5[A, T1, T2, T3, T4, T5](k1, k2, k3, k4, k5)(unapply)
+  )
+
+  def readz1[A, T1:Readz](k1: String)(f: T1 => A): Readz[A] = new Readz[A]{
+    def reads(js: JsValue) = field[T1](k1).apply(js).map(f)
+  }
 
   def readz2[A, T1:Readz, T2:Readz](k1: String, k2: String)(f: (T1,T2) => A): Readz[A] = new Readz[A]{
     def reads(js: JsValue) = {
@@ -81,6 +99,31 @@ object json {
         f2 <- field[T2](k2)
         f3 <- field[T3](k3)
       } yield Apply[VA].apply(f1, f2, f3)(f)
+      data(js)
+    }
+  }
+
+  def readz4[A, T1:Readz, T2:Readz, T3:Readz, T4:Readz](k1: String, k2: String, k3: String, k4: String)(f: (T1,T2,T3,T4) => A): Readz[A] = new Readz[A]{
+    def reads(js: JsValue) = {
+      val data = for {
+        f1 <- field[T1](k1)
+        f2 <- field[T2](k2)
+        f3 <- field[T3](k3)
+        f4 <- field[T4](k4)
+      } yield Apply[VA].apply(f1, f2, f3, f4)(f)
+      data(js)
+    }
+  }
+
+  def readz4[A, T1:Readz, T2:Readz, T3:Readz, T4:Readz, T5:Readz](k1: String, k2: String, k3: String, k4: String, k5: String)(f: (T1,T2,T3,T4,T5) => A): Readz[A] = new Readz[A]{
+    def reads(js: JsValue) = {
+      val data = for {
+        f1 <- field[T1](k1)
+        f2 <- field[T2](k2)
+        f3 <- field[T3](k3)
+        f4 <- field[T4](k4)
+        f5 <- field[T5](k5)
+      } yield Apply[VA].apply(f1, f2, f3, f4, f5)(f)
       data(js)
     }
   }
