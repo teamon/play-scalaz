@@ -23,6 +23,11 @@ Play's default json API:
 trait Reads[A] {
   def reads(js: JsValue): A
 }
+
+
+someJson.as[A]    // A or Exception
+someJson.asOpt[A] // Option[A]
+
 ```
 
 will throw exception in case of invalid json input, or when using `asOpt` will return `Option[A]` which contains no information about what went wrong.
@@ -32,4 +37,13 @@ play-scalaz provides
 trait Readz[A] {
   def reads(js: JsValue): Validation[NonEmptyList[String], A]
 }
+
+case class Foo(a: Int, b: String)
+
+implicit val FooReadz = readz2("a", "b")(Foo)
+
+
+fromJson[Foo](someJson) // Validation[NonEmptyList[String], Foo]
 ```
+
+which will return either the value or list of errors
