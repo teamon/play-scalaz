@@ -47,3 +47,36 @@ fromJson[Foo](someJson) // Validation[NonEmptyList[String], Foo]
 ```
 
 which will return either the value or list of errors
+
+
+### Promise Monad
+
+Let's say there is code like:
+```scala
+def authenticate(code: String): Promise[Option[Projects]] = requestAccessToken(code).flatMap { tokenOpt =>
+  tokenOpt.map { token => 
+    requestAccessToken(token).flatMap { userOpt =>
+      userOpt.map { user =>
+        requestProject(user)
+      } getOrElse Promise.pure(None)
+    }
+  } getOrElse Promise.pure(None)
+}
+
+def requestAccessToken(code: String): Promise[Option[String]]
+def requestUserInfo(accessToken: String): Promise[Option[UserInfo]]
+def requestProjects(user: UserInfo): Promise[Option[Projects]]
+```
+
+it gets even more bloated when number of calls grows.
+But with `Promise` being `Monad`:
+
+```scala
+def authenticate(code: String): Promise[Option[UserInfo]] = (for {
+  accessToken <- OptionT(requestAccessToken(code))
+  userInfo    <- OptionT(requestUserInfo(accessToken))
+  projects    <- OptionT(requestProject(userInfo))
+} yield projects).run
+```
+
+profit!
