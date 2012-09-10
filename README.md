@@ -13,3 +13,23 @@ val main = PlayProject(appName, appVersion, appDependencies, mainLang = SCALA).s
   resolvers += "scalajars.org repo" at "http://scalajars.org/repository"
 )
 ```
+
+## Features
+
+### Json deserialization
+
+Play's default json API:
+```scala
+trait Reads[A] {
+  def reads(js: JsValue): A
+}
+```
+
+will throw exception in case of invalid json input, or when using `asOpt` will return `Option[A]` which contains no information about what went wrong.
+
+play-scalaz provides
+```scala
+trait Readz[A] {
+  def reads(js: JsValue): Validation[NonEmptyList[String], A]
+}
+```
