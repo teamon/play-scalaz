@@ -11,7 +11,6 @@ val appDependencies = Seq(
 
 val main = PlayProject(appName, appVersion, appDependencies, mainLang = SCALA).settings(
   resolvers += "scalajars repo" at "http://scalajars.org/repository",
-  libraryDependencies += "eu.teamon" %% "play-scalaz" % "0.1.2-SNAPSHOT"
 )
 ```
 
