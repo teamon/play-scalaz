@@ -6,11 +6,12 @@ Add `play-scalaz` to your `project/Build.scala` file
 
 ``` scala
 val appDependencies = Seq(
-  "eu.teamon" %% "play-scalaz" % "0.1.0-SNAPSHOT"
+  "eu.teamon" %% "play-scalaz" % "0.1.2-SNAPSHOT"
 )
 
 val main = PlayProject(appName, appVersion, appDependencies, mainLang = SCALA).settings(
-  resolvers += "scalajars.org repo" at "http://scalajars.org/repository"
+  resolvers += "scalajars repo" at "http://scalajars.org/repository",
+  libraryDependencies += "eu.teamon" %% "play-scalaz" % "0.1.2-SNAPSHOT"
 )
 ```
 
